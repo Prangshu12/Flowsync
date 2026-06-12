@@ -1,0 +1,1042 @@
+<link rel="icon" type="image/jpeg" href="/assets/flowsync-logo.jpeg"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; }
+  #app {
+    background: #0a0a0f;
+    min-height: 100vh;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    color: #e0e0f0;
+    padding: 0;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px 12px;
+    border-bottom: 0.5px solid rgba(120,100,255,0.2);
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    color: #a099ff;
+  }
+  .logo span { color: #e0e0f0; }
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 0 12px rgba(120,100,255,0.35);
+    border: 0.5px solid rgba(160,153,255,0.35);
+  }
+  .nav {
+    display: flex;
+    gap: 6px;
+  }
+  .nav-btn {
+    background: transparent;
+    border: 0.5px solid rgba(160,153,255,0.25);
+    border-radius: 20px;
+    color: #888;
+    font-size: 12px;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-btn.active {
+    background: rgba(120,100,255,0.15);
+    border-color: #a099ff;
+    color: #a099ff;
+  }
+  .screen { display: none; padding: 24px; }
+  .screen.active { display: block; }
+
+  /* TIMER SCREEN */
+  .mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 4px;
+  }
+  .mode-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    color: #666;
+    font-size: 13px;
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-tab.active {
+    background: rgba(120,100,255,0.2);
+    color: #a099ff;
+  }
+  .timer-circle-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 8px 0 24px;
+  }
+  .timer-svg { width: 220px; height: 220px; }
+  .timer-track { fill: none; stroke: rgba(120,100,255,0.12); stroke-width: 8; }
+  .timer-progress {
+    fill: none;
+    stroke: #7b6fff;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 110px 110px;
+    transition: stroke-dashoffset 0.5s linear;
+  }
+  .timer-label {
+    font-size: 42px;
+    font-weight: 500;
+    fill: #e0e0f0;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .timer-sublabel {
+    font-size: 12px;
+    fill: #666;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .session-badge {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+  .settings-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .setting-card {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(120,100,255,0.15);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .setting-label {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .setting-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .setting-btn {
+    background: rgba(120,100,255,0.1);
+    border: 0.5px solid rgba(120,100,255,0.2);
+    border-radius: 6px;
+    color: #a099ff;
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .setting-val {
+    font-size: 16px;
+    font-weight: 500;
+    color: #e0e0f0;
+    min-width: 32px;
+    text-align: center;
+  }
+  .timer-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .ctrl-btn {
+    background: transparent;
+    border: 0.5px solid rgba(120,100,255,0.3);
+    border-radius: 10px;
+    color: #888;
+    font-size: 13px;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ctrl-btn.primary {
+    background: rgba(120,100,255,0.18);
+    border-color: #7b6fff;
+    color: #c0b8ff;
+    padding: 10px 40px;
+    font-size: 14px;
+  }
+  .ctrl-btn:hover { border-color: #a099ff; color: #a099ff; }
+  .sessions-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .session-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(120,100,255,0.15);
+    border: 0.5px solid rgba(120,100,255,0.3);
+    transition: background 0.3s;
+  }
+  .session-dot.done { background: #7b6fff; border-color: #a099ff; }
+  .flomo-info {
+    background: rgba(120,100,255,0.07);
+    border: 0.5px solid rgba(120,100,255,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .flomo-info b { color: #a099ff; font-weight: 500; }
+  .flomo-settings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .flomo-ratio-preview {
+    background: rgba(120,100,255,0.05);
+    border: 0.5px solid rgba(120,100,255,0.12);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 11px;
+    color: #555;
+    text-align: center;
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+  }
+  .flomo-ratio-preview b { color: #7b6fff; font-weight: 500; }
+
+  /* AUDIO SCREEN */
+  .audio-modes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .audio-mode-btn {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(120,100,255,0.15);
+    border-radius: 12px;
+    padding: 16px 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .audio-mode-btn.active {
+    background: rgba(120,100,255,0.15);
+    border-color: #a099ff;
+  }
+  .audio-mode-icon {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+  .audio-mode-name {
+    font-size: 11px;
+    color: #888;
+    letter-spacing: 0.3px;
+  }
+  .audio-mode-btn.active .audio-mode-name { color: #a099ff; }
+  .waveform-container {
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(120,100,255,0.15);
+    border-radius: 14px;
+    padding: 20px 16px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .waveform-label {
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+  }
+  #waveCanvas { width: 100%; height: 80px; display: block; }
+  .audio-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #333;
+    transition: background 0.3s;
+  }
+  .status-dot.playing { background: #7b6fff; }
+  .status-text { font-size: 12px; color: #555; }
+  .audio-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .play-btn {
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: rgba(120,100,255,0.18);
+    border: 0.5px solid #7b6fff;
+    color: #c0b8ff;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .play-btn:hover { background: rgba(120,100,255,0.28); }
+  .vol-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(120,100,255,0.12);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .vol-label { font-size: 12px; color: #555; min-width: 52px; }
+  .vol-slider { flex: 1; accent-color: #7b6fff; }
+  .vol-val { font-size: 12px; color: #888; min-width: 28px; text-align: right; }
+  .mode-desc {
+    background: rgba(120,100,255,0.07);
+    border: 0.5px solid rgba(120,100,255,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.6;
+  }
+  .mode-desc b { color: #a099ff; font-weight: 500; }
+
+  /* CONTACT / ABOUT */
+  .contact-footer {
+    border-top: 0.5px solid rgba(120,100,255,0.2);
+    padding: 20px 24px 28px;
+    margin-top: 8px;
+  }
+  .contact-title {
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .contact-card {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(120,100,255,0.15);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .contact-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: #e0e0f0;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+  .contact-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #888;
+    padding: 6px 0;
+  }
+  .contact-label {
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 1px;
+    min-width: 56px;
+    text-transform: uppercase;
+  }
+  .contact-value {
+    color: #c0b8ff;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .contact-value:hover { color: #a099ff; }
+
+  /* COMING SOON TOGGLE */
+  .coming-soon {
+    margin-top: 14px;
+    background: rgba(120,100,255,0.07);
+    border: 0.5px solid rgba(120,100,255,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .coming-soon-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: transparent;
+    border: none;
+    width: 100%;
+    color: inherit;
+    text-align: left;
+    font-family: inherit;
+  }
+  .coming-soon-title {
+    font-size: 12px;
+    color: #c0b8ff;
+    letter-spacing: 2px;
+    font-weight: 500;
+  }
+  .coming-soon-chevron {
+    font-size: 12px;
+    color: #a099ff;
+    transition: transform 0.25s ease;
+    display: inline-block;
+  }
+  .coming-soon.open .coming-soon-chevron { transform: rotate(180deg); }
+  .coming-soon-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding: 0 16px;
+  }
+  .coming-soon.open .coming-soon-body {
+    max-height: 400px;
+    padding: 0 16px 16px;
+  }
+  .coming-soon-intro {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .coming-soon-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .coming-soon-list li {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    color: #b0a8d8;
+    padding: 6px 10px;
+    background: rgba(120,100,255,0.08);
+    border: 0.5px solid rgba(120,100,255,0.15);
+    border-radius: 6px;
+  }
+  .coming-soon-list li .num {
+    color: #7b6fff;
+    font-weight: 500;
+    min-width: 18px;
+  }
+  .coming-soon-more {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+    margin-top: 8px;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+</style>
+
+<div id="app">
+  <div class="header">
+    <div class="logo"><img class="logo-mark" src="/assets/flowsync-logo.jpeg" alt="Flowsync logo"/>FLOW<span>SYNC</span></div>
+    <div class="nav">
+      <button class="nav-btn active" onclick="showScreen('timer')">Timer</button>
+      <button class="nav-btn" onclick="showScreen('audio')">Audio</button>
+    </div>
+  </div>
+
+  <!-- TIMER SCREEN -->
+  <div class="screen active" id="screen-timer">
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-pomo" onclick="switchMode('pomodoro')">Pomodoro</button>
+      <button class="mode-tab" id="tab-flomo" onclick="switchMode('flomodoro')">Flomodoro</button>
+    </div>
+
+    <div class="timer-circle-wrap">
+      <svg class="timer-svg" viewBox="0 0 220 220">
+        <circle class="timer-track" cx="110" cy="110" r="96"/>
+        <circle class="timer-progress" id="timerArc" cx="110" cy="110" r="96"
+          stroke-dasharray="603" stroke-dashoffset="0"/>
+        <text class="timer-label" x="110" y="104" id="timerDisplay">25:00</text>
+        <text class="timer-sublabel" x="110" y="128" id="timerPhase">FOCUS</text>
+      </svg>
+      <div class="session-badge" id="sessionBadge">SESSION 1 OF 4</div>
+    </div>
+
+    <div class="sessions-row" id="sessionDots">
+      <div class="session-dot"></div>
+      <div class="session-dot"></div>
+      <div class="session-dot"></div>
+      <div class="session-dot"></div>
+    </div>
+
+    <div class="settings-row" id="pomoSettings">
+      <div class="setting-card">
+        <div class="setting-label">FOCUS (MIN)</div>
+        <div class="setting-control">
+          <button class="setting-btn" onclick="adjust('focus',-5)">−</button>
+          <div class="setting-val" id="focusVal">25</div>
+          <button class="setting-btn" onclick="adjust('focus',5)">+</button>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-label">SHORT BREAK (MIN)</div>
+        <div class="setting-control">
+          <button class="setting-btn" onclick="adjust('shortBreak',-1)">−</button>
+          <div class="setting-val" id="shortBreakVal">5</div>
+          <button class="setting-btn" onclick="adjust('shortBreak',1)">+</button>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-label">LONG BREAK (MIN)</div>
+        <div class="setting-control">
+          <button class="setting-btn" onclick="adjust('longBreak',-5)">−</button>
+          <div class="setting-val" id="longBreakVal">15</div>
+          <button class="setting-btn" onclick="adjust('longBreak',5)">+</button>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-label">SESSIONS</div>
+        <div class="setting-control">
+          <button class="setting-btn" onclick="adjust('sessions',-1)">−</button>
+          <div class="setting-val" id="sessionsVal">4</div>
+          <button class="setting-btn" onclick="adjust('sessions',1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="flomoInfo" style="display:none;">
+      <div class="flomo-info">
+        <b>Flomodoro mode</b> — no fixed intervals. Focus as long as you can. Your break is earned proportionally based on the ratio below. The longer you stay in flow, the longer your rest.
+      </div>
+      <div class="flomo-settings">
+        <div class="setting-card">
+          <div class="setting-label">FOCUS CHUNK (MIN)</div>
+          <div class="setting-control">
+            <button class="setting-btn" onclick="adjustFlomo('focusChunk',-5)">&#8722;</button>
+            <div class="setting-val" id="focusChunkVal">20</div>
+            <button class="setting-btn" onclick="adjustFlomo('focusChunk',5)">+</button>
+          </div>
+        </div>
+        <div class="setting-card">
+          <div class="setting-label">BREAK EARNED (MIN)</div>
+          <div class="setting-control">
+            <button class="setting-btn" onclick="adjustFlomo('breakEarned',-1)">&#8722;</button>
+            <div class="setting-val" id="breakEarnedVal">5</div>
+            <button class="setting-btn" onclick="adjustFlomo('breakEarned',1)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="flomo-ratio-preview" id="flomoRatioPreview">
+        Every <b>20 min</b> of focus earns <b>5 min</b> of break &nbsp;&middot;&nbsp; ratio <b>4:1</b>
+      </div>
+    </div>
+
+    <div class="timer-controls">
+      <button class="ctrl-btn" onclick="resetTimer()">Reset</button>
+      <button class="ctrl-btn primary" id="startBtn" onclick="toggleTimer()">Start</button>
+      <button class="ctrl-btn" onclick="skipPhase()">Skip</button>
+    </div>
+  </div>
+
+  <!-- AUDIO SCREEN -->
+  <div class="screen" id="screen-audio">
+    <div class="audio-modes">
+      <div class="audio-mode-btn active" id="mode-deep" onclick="selectAudioMode('deep')">
+        <div class="audio-mode-icon">◉</div>
+        <div class="audio-mode-name">Deep Focus</div>
+      </div>
+      <div class="audio-mode-btn" id="mode-lecture" onclick="selectAudioMode('lecture')">
+        <div class="audio-mode-icon">◎</div>
+        <div class="audio-mode-name">Lecture Mode</div>
+      </div>
+      <div class="audio-mode-btn" id="mode-light" onclick="selectAudioMode('light')">
+        <div class="audio-mode-icon">○</div>
+        <div class="audio-mode-name">Light Focus</div>
+      </div>
+    </div>
+
+    <div class="waveform-container">
+      <div class="waveform-label">WAVEFORM</div>
+      <canvas id="waveCanvas" height="80"></canvas>
+      <div class="audio-status">
+        <div class="status-dot" id="statusDot"></div>
+        <div class="status-text" id="statusText">Paused — press play to begin</div>
+      </div>
+    </div>
+
+    <div class="audio-controls">
+      <button class="ctrl-btn" onclick="changeVol(-0.1)">−</button>
+      <button class="play-btn" id="playBtn" onclick="toggleAudio()">▶</button>
+      <button class="ctrl-btn" onclick="changeVol(0.1)">+</button>
+    </div>
+
+    <div class="vol-row" style="margin-bottom:16px;">
+      <div class="vol-label">Volume</div>
+      <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="70" step="1" oninput="setVol(this.value)"/>
+      <div class="vol-val" id="volVal">70%</div>
+    </div>
+
+    <div class="mode-desc" id="modeDesc">
+      <b>Deep Focus</b> — high stimulation layer with alpha-range binaural beats at 10 Hz. Designed for problem solving, coding, and high-effort cognitive tasks.
+    </div>
+  </div>
+
+  <!-- CONTACT / ABOUT -->
+  <div class="contact-footer">
+    <div class="contact-title">About the Creator</div>
+    <div class="contact-card">
+      <div class="contact-name">Prangshu Pranjal Saikia</div>
+      <div class="contact-row">
+        <span class="contact-label">Phone</span>
+        <a class="contact-value" href="tel:+916001033960">+91 6001033960</a>
+      </div>
+      <div class="contact-row">
+        <span class="contact-label">Email</span>
+        <a class="contact-value" href="mailto:prangshu12@gmail.com">prangshu12@gmail.com</a>
+      </div>
+    </div>
+
+    <div class="coming-soon" id="comingSoonBox">
+      <button class="coming-soon-header" type="button" onclick="toggleComingSoon()" aria-expanded="false" aria-controls="comingSoonBody">
+        <span class="coming-soon-title" id="comingSoonTitle">COMING SOON STAY TUNED</span>
+        <span class="coming-soon-chevron">▾</span>
+      </button>
+      <div class="coming-soon-body" id="comingSoonBody">
+        <div class="coming-soon-intro">New changes coming soon — here's what's on the way:</div>
+        <ul class="coming-soon-list">
+          <li><span class="num">1.</span><span>Analytics</span></li>
+          <li><span class="num">2.</span><span>More sounds</span></li>
+          <li><span class="num">3.</span><span>App blockers and limiters</span></li>
+          <li><span class="num">4.</span><span>Leaderboard</span></li>
+          <li><span class="num">5.</span><span>Body doubling feature</span></li>
+        </ul>
+        <div class="coming-soon-more">and much more…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var currentMode = 'pomodoro';
+  var settings = { focus: 25, shortBreak: 5, longBreak: 15, sessions: 4 };
+  var flomoSettings = { focusChunk: 20, breakEarned: 5 };
+  var timerInterval = null;
+  var isRunning = false;
+  var currentSession = 1;
+  var isBreak = false;
+  var secondsLeft = 0;
+  var totalSeconds = 0;
+  var flomodoroStart = null;
+
+  function adjustFlomo(key, delta) {
+    var min = key === 'focusChunk' ? 5 : 1;
+    var max = key === 'focusChunk' ? 60 : 30;
+    flomoSettings[key] = Math.min(max, Math.max(min, flomoSettings[key] + delta));
+    document.getElementById(key + 'Val').textContent = flomoSettings[key];
+    updateFlomoRatioPreview();
+  }
+
+  function updateFlomoRatioPreview() {
+    var fc = flomoSettings.focusChunk;
+    var be = flomoSettings.breakEarned;
+    var ratio = (fc / be).toFixed(1).replace(/\.0$/, '');
+    document.getElementById('flomoRatioPreview').innerHTML =
+      'Every <b>' + fc + ' min</b> of focus earns <b>' + be + ' min</b> of break &nbsp;&middot;&nbsp; ratio <b>' + ratio + ':1</b>';
+  }
+
+  function calcFlomoBreak(focusedSeconds) {
+    var breakSec = Math.round((focusedSeconds / (flomoSettings.focusChunk * 60)) * (flomoSettings.breakEarned * 60));
+    return Math.max(60, breakSec);
+  }
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('screen-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function switchMode(mode) {
+    currentMode = mode;
+    document.getElementById('tab-pomo').classList.toggle('active', mode === 'pomodoro');
+    document.getElementById('tab-flomo').classList.toggle('active', mode === 'flomodoro');
+    document.getElementById('pomoSettings').style.display = mode === 'pomodoro' ? 'grid' : 'none';
+    document.getElementById('flomoInfo').style.display = mode === 'flomodoro' ? 'block' : 'none';
+    if (mode === 'flomodoro') {
+      document.getElementById('timerPhase').textContent = 'FOCUS';
+      document.getElementById('sessionBadge').textContent = 'FLOW SESSION';
+    }
+    resetTimer();
+  }
+
+  function adjust(key, delta) {
+    var min = key === 'sessions' ? 1 : (key === 'shortBreak' ? 1 : 5);
+    var max = key === 'sessions' ? 8 : (key === 'focus' ? 90 : (key === 'shortBreak' ? 30 : 60));
+    settings[key] = Math.min(max, Math.max(min, settings[key] + delta));
+    var idMap = { focus: 'focusVal', shortBreak: 'shortBreakVal', longBreak: 'longBreakVal', sessions: 'sessionsVal' };
+    document.getElementById(idMap[key]).textContent = settings[key];
+    if (!isRunning) resetTimer();
+    updateSessionDots();
+  }
+
+  function updateSessionDots() {
+    var container = document.getElementById('sessionDots');
+    container.innerHTML = '';
+    for (var i = 0; i < settings.sessions; i++) {
+      var dot = document.createElement('div');
+      dot.className = 'session-dot' + (i < currentSession - 1 ? ' done' : '');
+      container.appendChild(dot);
+    }
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval);
+    isRunning = false;
+    isBreak = false;
+    currentSession = 1;
+    flomodoroStart = null;
+    document.getElementById('startBtn').textContent = 'Start';
+    if (currentMode === 'pomodoro') {
+      secondsLeft = settings.focus * 60;
+      totalSeconds = settings.focus * 60;
+    } else {
+      secondsLeft = 0;
+      totalSeconds = 1;
+      document.getElementById('timerPhase').textContent = 'FOCUS';
+      document.getElementById('sessionBadge').textContent = 'FLOW SESSION';
+    }
+    updateDisplay();
+    updateArc(1);
+    if (currentMode === 'pomodoro') {
+      document.getElementById('timerPhase').textContent = 'FOCUS';
+      document.getElementById('sessionBadge').textContent = 'SESSION 1 OF ' + settings.sessions;
+    }
+    updateSessionDots();
+  }
+
+  function toggleTimer() {
+    if (isRunning) {
+      clearInterval(timerInterval);
+      isRunning = false;
+      document.getElementById('startBtn').textContent = 'Resume';
+      if (currentMode === 'flomodoro' && flomodoroStart) {
+        flomodoroStart = null;
+      }
+      if (currentMode === 'flomodoro' && !isBreak) {
+        document.getElementById('timerPhase').textContent = 'FOCUS (PAUSED)';
+      }
+    } else {
+      isRunning = true;
+      document.getElementById('startBtn').textContent = 'Pause';
+      if (currentMode === 'flomodoro' && !isBreak) {
+        flomodoroStart = Date.now() - (secondsLeft * 1000);
+        if (secondsLeft === 0) {
+          flomodoroStart = Date.now();
+          totalSeconds = 1;
+        }
+        document.getElementById('timerPhase').textContent = 'FOCUS';
+      }
+      timerInterval = setInterval(tick, 1000);
+    }
+  }
+
+  function tick() {
+    if (currentMode === 'pomodoro') {
+      if (secondsLeft > 0) {
+        secondsLeft--;
+        updateDisplay();
+        updateArc(secondsLeft / totalSeconds);
+      } else {
+        phaseComplete();
+      }
+    } else {
+      if (!isBreak) {
+        secondsLeft++;
+        totalSeconds = secondsLeft;
+        updateDisplay();
+        updateArc(1);
+        // Show earned break time live
+        var earnedSec = calcFlomoBreak(secondsLeft);
+        var em = Math.floor(earnedSec / 60);
+        var es = earnedSec % 60;
+        document.getElementById('timerPhase').textContent =
+          'EARNED ' + String(em).padStart(2,'0') + ':' + String(es).padStart(2,'0') + ' BREAK';
+      } else {
+        if (secondsLeft > 0) {
+          secondsLeft--;
+          updateDisplay();
+          updateArc(secondsLeft / totalSeconds);
+        } else {
+          phaseComplete();
+        }
+      }
+    }
+  }
+
+  function phaseComplete() {
+    if (currentMode === 'pomodoro') {
+      if (!isBreak) {
+        isBreak = true;
+        var isLong = currentSession % settings.sessions === 0;
+        secondsLeft = (isLong ? settings.longBreak : settings.shortBreak) * 60;
+        totalSeconds = secondsLeft;
+        document.getElementById('timerPhase').textContent = isLong ? 'LONG BREAK' : 'SHORT BREAK';
+      } else {
+        isBreak = false;
+        if (currentSession < settings.sessions) {
+          currentSession++;
+        } else {
+          currentSession = 1;
+          updateSessionDots();
+        }
+        var dots = document.querySelectorAll('.session-dot');
+        for (var i = 0; i < dots.length; i++) {
+          dots[i].classList.toggle('done', i < currentSession - 1);
+        }
+        secondsLeft = settings.focus * 60;
+        totalSeconds = secondsLeft;
+        document.getElementById('timerPhase').textContent = 'FOCUS';
+        document.getElementById('sessionBadge').textContent = 'SESSION ' + currentSession + ' OF ' + settings.sessions;
+      }
+    } else {
+      if (isBreak) {
+        isBreak = false;
+        secondsLeft = 0;
+        totalSeconds = 1;
+        flomodoroStart = Date.now();
+        document.getElementById('timerPhase').textContent = 'FOCUS';
+      }
+    }
+    updateDisplay();
+  }
+
+  function skipPhase() {
+    if (currentMode === 'flomodoro' && !isBreak) {
+      var focusedSec = secondsLeft;
+      var breakSec = calcFlomoBreak(focusedSec);
+      isBreak = true;
+      secondsLeft = breakSec;
+      totalSeconds = breakSec;
+      document.getElementById('timerPhase').textContent = 'BREAK';
+      flomodoroStart = null;
+    } else {
+      phaseComplete();
+    }
+    updateDisplay();
+  }
+
+  function updateDisplay() {
+    var m, s;
+    if (currentMode === 'flomodoro' && !isBreak) {
+      m = Math.floor(secondsLeft / 60);
+      s = secondsLeft % 60;
+    } else {
+      m = Math.floor(secondsLeft / 60);
+      s = secondsLeft % 60;
+    }
+    document.getElementById('timerDisplay').textContent =
+      String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  function updateArc(fraction) {
+    var circ = 603;
+    var offset = circ * (1 - Math.max(0, Math.min(1, fraction)));
+    document.getElementById('timerArc').style.strokeDashoffset = offset;
+  }
+
+  var audioPlaying = false;
+  var audioCtx = null;
+  var gainNode = null;
+  var noiseSource = null;
+  var animFrame = null;
+  var currentAudioMode = 'deep';
+  var volume = 0.7;
+
+  var modeDescs = {
+    deep: '<b>Deep Focus</b> — high stimulation layer with alpha-range binaural beats at 10 Hz. Designed for problem solving, coding, and high-effort cognitive tasks.',
+    lecture: '<b>Lecture Mode</b> — minimal, speech-safe audio. Frequencies shaped to avoid the 300–3000 Hz speech range. Use during live lectures or video lessons.',
+    light: '<b>Light Focus</b> — balanced low-intensity layer. Gentle ambient texture for reading, light revision, or creative work.'
+  };
+
+  function selectAudioMode(mode) {
+    currentAudioMode = mode;
+    ['deep','lecture','light'].forEach(function(m) {
+      document.getElementById('mode-' + m).classList.toggle('active', m === mode);
+    });
+    document.getElementById('modeDesc').innerHTML = modeDescs[mode];
+    if (audioPlaying) {
+      stopAudio();
+      startAudio();
+    }
+  }
+
+  function toggleAudio() {
+    if (audioPlaying) {
+      stopAudio();
+    } else {
+      startAudio();
+    }
+  }
+
+  function startAudio() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = volume;
+    gainNode.connect(audioCtx.destination);
+
+    var bufferSize = audioCtx.sampleRate * 2;
+    var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    var data = buffer.getChannelData(0);
+    var lastOut = 0;
+    for (var i = 0; i < bufferSize; i++) {
+      var white = Math.random() * 2 - 1;
+      data[i] = (lastOut + (0.02 * white)) / 1.02;
+      lastOut = data[i];
+      data[i] *= 3.5;
+    }
+
+    noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+    noiseSource.loop = true;
+
+    var filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = currentAudioMode === 'deep' ? 400 : (currentAudioMode === 'lecture' ? 200 : 300);
+
+    noiseSource.connect(filter);
+    filter.connect(gainNode);
+    noiseSource.start();
+
+    audioPlaying = true;
+    document.getElementById('playBtn').textContent = '⏸';
+    document.getElementById('statusDot').classList.add('playing');
+    document.getElementById('statusText').textContent = 'Playing — ' + (currentAudioMode === 'deep' ? 'Deep Focus' : currentAudioMode === 'lecture' ? 'Lecture Mode' : 'Light Focus');
+    drawWaveform();
+  }
+
+  function stopAudio() {
+    if (noiseSource) { try { noiseSource.stop(); } catch(e){} }
+    if (audioCtx) { try { audioCtx.close(); } catch(e){} }
+    if (animFrame) cancelAnimationFrame(animFrame);
+    audioPlaying = false;
+    document.getElementById('playBtn').textContent = '▶';
+    document.getElementById('statusDot').classList.remove('playing');
+    document.getElementById('statusText').textContent = 'Paused — press play to begin';
+    var canvas = document.getElementById('waveCanvas');
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawFlatLine();
+  }
+
+  function changeVol(delta) {
+    volume = Math.min(1, Math.max(0, volume + delta));
+    document.getElementById('volSlider').value = Math.round(volume * 100);
+    document.getElementById('volVal').textContent = Math.round(volume * 100) + '%';
+    if (gainNode) gainNode.gain.value = volume;
+  }
+
+  function setVol(val) {
+    volume = parseInt(val) / 100;
+    document.getElementById('volVal').textContent = Math.round(volume * 100) + '%';
+    if (gainNode) gainNode.gain.value = volume;
+  }
+
+  function drawFlatLine() {
+    var canvas = document.getElementById('waveCanvas');
+    canvas.width = canvas.offsetWidth;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = 'rgba(120,100,255,0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height / 2);
+    ctx.lineTo(canvas.width, canvas.height / 2);
+    ctx.stroke();
+  }
+
+  var wavePhase = 0;
+  function drawWaveform() {
+    var canvas = document.getElementById('waveCanvas');
+    canvas.width = canvas.offsetWidth;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width;
+    var h = canvas.height;
+
+    function frame() {
+      if (!audioPlaying) return;
+      ctx.clearRect(0, 0, w, h);
+
+      var amp = currentAudioMode === 'deep' ? 28 : (currentAudioMode === 'lecture' ? 14 : 20);
+      var freq = currentAudioMode === 'deep' ? 2.5 : (currentAudioMode === 'lecture' ? 1.5 : 2);
+
+      ctx.strokeStyle = 'rgba(120,100,255,0.7)';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(120,100,255,0.3)';
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      for (var x = 0; x < w; x++) {
+        var t = (x / w) * Math.PI * 2 * freq + wavePhase;
+        var noise = (Math.random() - 0.5) * 6;
+        var y = h / 2 + Math.sin(t) * amp + Math.sin(t * 2.3 + 1) * (amp * 0.3) + noise;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(160,153,255,0.25)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (var x2 = 0; x2 < w; x2++) {
+        var t2 = (x2 / w) * Math.PI * 2 * freq * 1.7 + wavePhase * 1.3;
+        var y2 = h / 2 + Math.sin(t2) * (amp * 0.5) + (Math.random() - 0.5) * 3;
+        if (x2 === 0) ctx.moveTo(x2, y2); else ctx.lineTo(x2, y2);
+      }
+      ctx.stroke();
+
+      wavePhase += 0.04;
+      animFrame = requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  resetTimer();
+  drawFlatLine();
+
+  function toggleComingSoon() {
+    var box = document.getElementById('comingSoonBox');
+    var title = document.getElementById('comingSoonTitle');
+    var header = box.querySelector('.coming-soon-header');
+    var isOpen = box.classList.toggle('open');
+    title.textContent = isOpen ? 'NEW CHANGES COMING SOON' : 'COMING SOON STAY TUNED';
+    header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  }
+</script>
