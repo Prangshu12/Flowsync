@@ -1,480 +1,487 @@
-<link rel="icon" type="image/jpeg" href="assets/flowsync-logo.jpeg"/>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: transparent; }
-  #app {
-    background: #0a0a0f;
-    min-height: 100vh;
-    font-family: var(--font-sans, system-ui, sans-serif);
-    color: #e0e0f0;
-    padding: 0;
-  }
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 24px 12px;
-    border-bottom: 0.5px solid rgba(120,100,255,0.2);
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 20px;
-    font-weight: 500;
-    letter-spacing: 3px;
-    color: #a099ff;
-  }
-  .logo span { color: #e0e0f0; }
-  .logo-mark {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    object-fit: cover;
-    box-shadow: 0 0 12px rgba(120,100,255,0.35);
-    border: 0.5px solid rgba(160,153,255,0.35);
-  }
-  .nav {
-    display: flex;
-    gap: 6px;
-  }
-  .nav-btn {
-    background: transparent;
-    border: 0.5px solid rgba(160,153,255,0.25);
-    border-radius: 20px;
-    color: #888;
-    font-size: 12px;
-    padding: 5px 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .nav-btn.active {
-    background: rgba(120,100,255,0.15);
-    border-color: #a099ff;
-    color: #a099ff;
-  }
-  .screen { display: none; padding: 24px; }
-  .screen.active { display: block; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flowsync - Pomodoro & Audio</title>
+  <link rel="icon" type="image/jpeg" href="./assets/flowsync-logo.jpeg"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: transparent; }
+    #app {
+      background: #0a0a0f;
+      min-height: 100vh;
+      font-family: var(--font-sans, system-ui, sans-serif);
+      color: #e0e0f0;
+      padding: 0;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px 12px;
+      border-bottom: 0.5px solid rgba(120,100,255,0.2);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      color: #a099ff;
+    }
+    .logo span { color: #e0e0f0; }
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      object-fit: cover;
+      box-shadow: 0 0 12px rgba(120,100,255,0.35);
+      border: 0.5px solid rgba(160,153,255,0.35);
+    }
+    .nav {
+      display: flex;
+      gap: 6px;
+    }
+    .nav-btn {
+      background: transparent;
+      border: 0.5px solid rgba(160,153,255,0.25);
+      border-radius: 20px;
+      color: #888;
+      font-size: 12px;
+      padding: 5px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn.active {
+      background: rgba(120,100,255,0.15);
+      border-color: #a099ff;
+      color: #a099ff;
+    }
+    .screen { display: none; padding: 24px; }
+    .screen.active { display: block; }
 
-  /* TIMER SCREEN */
-  .mode-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 28px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 12px;
-    padding: 4px;
-  }
-  .mode-tab {
-    flex: 1;
-    background: transparent;
-    border: none;
-    border-radius: 9px;
-    color: #666;
-    font-size: 13px;
-    padding: 8px 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .mode-tab.active {
-    background: rgba(120,100,255,0.2);
-    color: #a099ff;
-  }
-  .timer-circle-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 8px 0 24px;
-  }
-  .timer-svg { width: 220px; height: 220px; }
-  .timer-track { fill: none; stroke: rgba(120,100,255,0.12); stroke-width: 8; }
-  .timer-progress {
-    fill: none;
-    stroke: #7b6fff;
-    stroke-width: 8;
-    stroke-linecap: round;
-    transform: rotate(-90deg);
-    transform-origin: 110px 110px;
-    transition: stroke-dashoffset 0.5s linear;
-  }
-  .timer-label {
-    font-size: 42px;
-    font-weight: 500;
-    fill: #e0e0f0;
-    text-anchor: middle;
-    dominant-baseline: middle;
-  }
-  .timer-sublabel {
-    font-size: 12px;
-    fill: #666;
-    text-anchor: middle;
-    dominant-baseline: middle;
-  }
-  .session-badge {
-    font-size: 12px;
-    color: #666;
-    margin-top: 8px;
-    letter-spacing: 1px;
-  }
-  .settings-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .setting-card {
-    background: rgba(255,255,255,0.04);
-    border: 0.5px solid rgba(120,100,255,0.15);
-    border-radius: 10px;
-    padding: 12px 14px;
-  }
-  .setting-label {
-    font-size: 11px;
-    color: #555;
-    margin-bottom: 6px;
-    letter-spacing: 0.5px;
-  }
-  .setting-control {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .setting-btn {
-    background: rgba(120,100,255,0.1);
-    border: 0.5px solid rgba(120,100,255,0.2);
-    border-radius: 6px;
-    color: #a099ff;
-    width: 26px;
-    height: 26px;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-  }
-  .setting-val {
-    font-size: 16px;
-    font-weight: 500;
-    color: #e0e0f0;
-    min-width: 32px;
-    text-align: center;
-  }
-  .timer-controls {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  .ctrl-btn {
-    background: transparent;
-    border: 0.5px solid rgba(120,100,255,0.3);
-    border-radius: 10px;
-    color: #888;
-    font-size: 13px;
-    padding: 10px 22px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .ctrl-btn.primary {
-    background: rgba(120,100,255,0.18);
-    border-color: #7b6fff;
-    color: #c0b8ff;
-    padding: 10px 40px;
-    font-size: 14px;
-  }
-  .ctrl-btn:hover { border-color: #a099ff; color: #a099ff; }
-  .sessions-row {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    margin-bottom: 16px;
-  }
-  .session-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: rgba(120,100,255,0.15);
-    border: 0.5px solid rgba(120,100,255,0.3);
-    transition: background 0.3s;
-  }
-  .session-dot.done { background: #7b6fff; border-color: #a099ff; }
-  .flomo-info {
-    background: rgba(120,100,255,0.07);
-    border: 0.5px solid rgba(120,100,255,0.15);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 12px;
-    color: #666;
-    line-height: 1.6;
-    margin-bottom: 12px;
-  }
-  .flomo-info b { color: #a099ff; font-weight: 500; }
-  .flomo-settings {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .flomo-ratio-preview {
-    background: rgba(120,100,255,0.05);
-    border: 0.5px solid rgba(120,100,255,0.12);
-    border-radius: 8px;
-    padding: 9px 14px;
-    font-size: 11px;
-    color: #555;
-    text-align: center;
-    margin-bottom: 16px;
-    letter-spacing: 0.3px;
-  }
-  .flomo-ratio-preview b { color: #7b6fff; font-weight: 500; }
+    /* TIMER SCREEN */
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      padding: 4px;
+    }
+    .mode-tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 9px;
+      color: #666;
+      font-size: 13px;
+      padding: 8px 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-tab.active {
+      background: rgba(120,100,255,0.2);
+      color: #a099ff;
+    }
+    .timer-circle-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 8px 0 24px;
+    }
+    .timer-svg { width: 220px; height: 220px; }
+    .timer-track { fill: none; stroke: rgba(120,100,255,0.12); stroke-width: 8; }
+    .timer-progress {
+      fill: none;
+      stroke: #7b6fff;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: 110px 110px;
+      transition: stroke-dashoffset 0.5s linear;
+    }
+    .timer-label {
+      font-size: 42px;
+      font-weight: 500;
+      fill: #e0e0f0;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+    .timer-sublabel {
+      font-size: 12px;
+      fill: #666;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+    .session-badge {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+    .settings-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .setting-card {
+      background: rgba(255,255,255,0.04);
+      border: 0.5px solid rgba(120,100,255,0.15);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .setting-label {
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .setting-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .setting-btn {
+      background: rgba(120,100,255,0.1);
+      border: 0.5px solid rgba(120,100,255,0.2);
+      border-radius: 6px;
+      color: #a099ff;
+      width: 26px;
+      height: 26px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .setting-val {
+      font-size: 16px;
+      font-weight: 500;
+      color: #e0e0f0;
+      min-width: 32px;
+      text-align: center;
+    }
+    .timer-controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .ctrl-btn {
+      background: transparent;
+      border: 0.5px solid rgba(120,100,255,0.3);
+      border-radius: 10px;
+      color: #888;
+      font-size: 13px;
+      padding: 10px 22px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ctrl-btn.primary {
+      background: rgba(120,100,255,0.18);
+      border-color: #7b6fff;
+      color: #c0b8ff;
+      padding: 10px 40px;
+      font-size: 14px;
+    }
+    .ctrl-btn:hover { border-color: #a099ff; color: #a099ff; }
+    .sessions-row {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .session-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(120,100,255,0.15);
+      border: 0.5px solid rgba(120,100,255,0.3);
+      transition: background 0.3s;
+    }
+    .session-dot.done { background: #7b6fff; border-color: #a099ff; }
+    .flomo-info {
+      background: rgba(120,100,255,0.07);
+      border: 0.5px solid rgba(120,100,255,0.15);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .flomo-info b { color: #a099ff; font-weight: 500; }
+    .flomo-settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .flomo-ratio-preview {
+      background: rgba(120,100,255,0.05);
+      border: 0.5px solid rgba(120,100,255,0.12);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 11px;
+      color: #555;
+      text-align: center;
+      margin-bottom: 16px;
+      letter-spacing: 0.3px;
+    }
+    .flomo-ratio-preview b { color: #7b6fff; font-weight: 500; }
 
-  /* AUDIO SCREEN */
-  .audio-modes {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-  .audio-mode-btn {
-    background: rgba(255,255,255,0.04);
-    border: 0.5px solid rgba(120,100,255,0.15);
-    border-radius: 12px;
-    padding: 16px 8px;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.2s;
-  }
-  .audio-mode-btn.active {
-    background: rgba(120,100,255,0.15);
-    border-color: #a099ff;
-  }
-  .audio-mode-icon {
-    font-size: 22px;
-    margin-bottom: 6px;
-  }
-  .audio-mode-name {
-    font-size: 11px;
-    color: #888;
-    letter-spacing: 0.3px;
-  }
-  .audio-mode-btn.active .audio-mode-name { color: #a099ff; }
-  .waveform-container {
-    background: rgba(255,255,255,0.03);
-    border: 0.5px solid rgba(120,100,255,0.15);
-    border-radius: 14px;
-    padding: 20px 16px;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-  }
-  .waveform-label {
-    font-size: 11px;
-    color: #444;
-    letter-spacing: 1px;
-    margin-bottom: 14px;
-  }
-  #waveCanvas { width: 100%; height: 80px; display: block; }
-  .audio-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .status-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #333;
-    transition: background 0.3s;
-  }
-  .status-dot.playing { background: #7b6fff; }
-  .status-text { font-size: 12px; color: #555; }
-  .audio-controls {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  .play-btn {
-    width: 54px; height: 54px;
-    border-radius: 50%;
-    background: rgba(120,100,255,0.18);
-    border: 0.5px solid #7b6fff;
-    color: #c0b8ff;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-  .play-btn:hover { background: rgba(120,100,255,0.28); }
-  .vol-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255,255,255,0.03);
-    border: 0.5px solid rgba(120,100,255,0.12);
-    border-radius: 10px;
-    padding: 12px 16px;
-  }
-  .vol-label { font-size: 12px; color: #555; min-width: 52px; }
-  .vol-slider { flex: 1; accent-color: #7b6fff; }
-  .vol-val { font-size: 12px; color: #888; min-width: 28px; text-align: right; }
-  .mode-desc {
-    background: rgba(120,100,255,0.07);
-    border: 0.5px solid rgba(120,100,255,0.15);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 12px;
-    color: #666;
-    line-height: 1.6;
-  }
-  .mode-desc b { color: #a099ff; font-weight: 500; }
+    /* AUDIO SCREEN */
+    .audio-modes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .audio-mode-btn {
+      background: rgba(255,255,255,0.04);
+      border: 0.5px solid rgba(120,100,255,0.15);
+      border-radius: 12px;
+      padding: 16px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .audio-mode-btn.active {
+      background: rgba(120,100,255,0.15);
+      border-color: #a099ff;
+    }
+    .audio-mode-icon {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+    .audio-mode-name {
+      font-size: 11px;
+      color: #888;
+      letter-spacing: 0.3px;
+    }
+    .audio-mode-btn.active .audio-mode-name { color: #a099ff; }
+    .waveform-container {
+      background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(120,100,255,0.15);
+      border-radius: 14px;
+      padding: 20px 16px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .waveform-label {
+      font-size: 11px;
+      color: #444;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+    #waveCanvas { width: 100%; height: 80px; display: block; }
+    .audio-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #333;
+      transition: background 0.3s;
+    }
+    .status-dot.playing { background: #7b6fff; }
+    .status-text { font-size: 12px; color: #555; }
+    .audio-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .play-btn {
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      background: rgba(120,100,255,0.18);
+      border: 0.5px solid #7b6fff;
+      color: #c0b8ff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .play-btn:hover { background: rgba(120,100,255,0.28); }
+    .vol-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(120,100,255,0.12);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+    .vol-label { font-size: 12px; color: #555; min-width: 52px; }
+    .vol-slider { flex: 1; accent-color: #7b6fff; }
+    .vol-val { font-size: 12px; color: #888; min-width: 28px; text-align: right; }
+    .mode-desc {
+      background: rgba(120,100,255,0.07);
+      border: 0.5px solid rgba(120,100,255,0.15);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+    }
+    .mode-desc b { color: #a099ff; font-weight: 500; }
 
-  /* CONTACT / ABOUT */
-  .contact-footer {
-    border-top: 0.5px solid rgba(120,100,255,0.2);
-    padding: 20px 24px 28px;
-    margin-top: 8px;
-  }
-  .contact-title {
-    font-size: 11px;
-    color: #555;
-    letter-spacing: 2px;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-  }
-  .contact-card {
-    background: rgba(255,255,255,0.04);
-    border: 0.5px solid rgba(120,100,255,0.15);
-    border-radius: 12px;
-    padding: 16px 18px;
-  }
-  .contact-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: #e0e0f0;
-    margin-bottom: 10px;
-    letter-spacing: 0.5px;
-  }
-  .contact-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: #888;
-    padding: 6px 0;
-  }
-  .contact-label {
-    font-size: 10px;
-    color: #555;
-    letter-spacing: 1px;
-    min-width: 56px;
-    text-transform: uppercase;
-  }
-  .contact-value {
-    color: #c0b8ff;
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-  .contact-value:hover { color: #a099ff; }
+    /* CONTACT / ABOUT */
+    .contact-footer {
+      border-top: 0.5px solid rgba(120,100,255,0.2);
+      padding: 20px 24px 28px;
+      margin-top: 8px;
+    }
+    .contact-title {
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .contact-card {
+      background: rgba(255,255,255,0.04);
+      border: 0.5px solid rgba(120,100,255,0.15);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .contact-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: #e0e0f0;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    .contact-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #888;
+      padding: 6px 0;
+    }
+    .contact-label {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 1px;
+      min-width: 56px;
+      text-transform: uppercase;
+    }
+    .contact-value {
+      color: #c0b8ff;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .contact-value:hover { color: #a099ff; }
 
-  /* COMING SOON TOGGLE */
-  .coming-soon {
-    margin-top: 14px;
-    background: rgba(120,100,255,0.07);
-    border: 0.5px solid rgba(120,100,255,0.2);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .coming-soon-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 14px 16px;
-    cursor: pointer;
-    user-select: none;
-    background: transparent;
-    border: none;
-    width: 100%;
-    color: inherit;
-    text-align: left;
-    font-family: inherit;
-  }
-  .coming-soon-title {
-    font-size: 12px;
-    color: #c0b8ff;
-    letter-spacing: 2px;
-    font-weight: 500;
-  }
-  .coming-soon-chevron {
-    font-size: 12px;
-    color: #a099ff;
-    transition: transform 0.25s ease;
-    display: inline-block;
-  }
-  .coming-soon.open .coming-soon-chevron { transform: rotate(180deg); }
-  .coming-soon-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-    padding: 0 16px;
-  }
-  .coming-soon.open .coming-soon-body {
-    max-height: 400px;
-    padding: 0 16px 16px;
-  }
-  .coming-soon-intro {
-    font-size: 12px;
-    color: #888;
-    line-height: 1.6;
-    margin-bottom: 10px;
-  }
-  .coming-soon-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .coming-soon-list li {
-    display: flex;
-    gap: 10px;
-    font-size: 12px;
-    color: #b0a8d8;
-    padding: 6px 10px;
-    background: rgba(120,100,255,0.08);
-    border: 0.5px solid rgba(120,100,255,0.15);
-    border-radius: 6px;
-  }
-  .coming-soon-list li .num {
-    color: #7b6fff;
-    font-weight: 500;
-    min-width: 18px;
-  }
-  .coming-soon-more {
-    font-size: 11px;
-    color: #666;
-    font-style: italic;
-    margin-top: 8px;
-    text-align: center;
-    letter-spacing: 0.3px;
-  }
-</style>
+    /* COMING SOON TOGGLE */
+    .coming-soon {
+      margin-top: 14px;
+      background: rgba(120,100,255,0.07);
+      border: 0.5px solid rgba(120,100,255,0.2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .coming-soon-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+      background: transparent;
+      border: none;
+      width: 100%;
+      color: inherit;
+      text-align: left;
+      font-family: inherit;
+    }
+    .coming-soon-title {
+      font-size: 12px;
+      color: #c0b8ff;
+      letter-spacing: 2px;
+      font-weight: 500;
+    }
+    .coming-soon-chevron {
+      font-size: 12px;
+      color: #a099ff;
+      transition: transform 0.25s ease;
+      display: inline-block;
+    }
+    .coming-soon.open .coming-soon-chevron { transform: rotate(180deg); }
+    .coming-soon-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      padding: 0 16px;
+    }
+    .coming-soon.open .coming-soon-body {
+      max-height: 400px;
+      padding: 0 16px 16px;
+    }
+    .coming-soon-intro {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .coming-soon-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .coming-soon-list li {
+      display: flex;
+      gap: 10px;
+      font-size: 12px;
+      color: #b0a8d8;
+      padding: 6px 10px;
+      background: rgba(120,100,255,0.08);
+      border: 0.5px solid rgba(120,100,255,0.15);
+      border-radius: 6px;
+    }
+    .coming-soon-list li .num {
+      color: #7b6fff;
+      font-weight: 500;
+      min-width: 18px;
+    }
+    .coming-soon-more {
+      font-size: 11px;
+      color: #666;
+      font-style: italic;
+      margin-top: 8px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
 
 <div id="app">
   <div class="header">
-    <div class="logo"><img class="logo-mark" src="/assets/flowsync-logo.jpeg" alt="Flowsync logo"/>FLOW<span>SYNC</span></div>
+    <div class="logo"><img class="logo-mark" src="./assets/flowsync-logo.jpeg" alt="Flowsync logo"/>FLOW<span>SYNC</span></div>
     <div class="nav">
       <button class="nav-btn active" onclick="showScreen('timer')">Timer</button>
       <button class="nav-btn" onclick="showScreen('audio')">Audio</button>
     </div>
   </div>
 
-  <!-- TIMER SCREEN -->
   <div class="screen active" id="screen-timer">
     <div class="mode-tabs">
       <button class="mode-tab active" id="tab-pomo" onclick="switchMode('pomodoro')">Pomodoro</button>
@@ -485,7 +492,7 @@
       <svg class="timer-svg" viewBox="0 0 220 220">
         <circle class="timer-track" cx="110" cy="110" r="96"/>
         <circle class="timer-progress" id="timerArc" cx="110" cy="110" r="96"
-          stroke-dasharray="603" stroke-dashoffset="0"/>
+                stroke-dasharray="603" stroke-dashoffset="0"/>
         <text class="timer-label" x="110" y="104" id="timerDisplay">25:00</text>
         <text class="timer-sublabel" x="110" y="128" id="timerPhase">FOCUS</text>
       </svg>
@@ -568,7 +575,6 @@
     </div>
   </div>
 
-  <!-- AUDIO SCREEN -->
   <div class="screen" id="screen-audio">
     <div class="audio-modes">
       <div class="audio-mode-btn active" id="mode-deep" onclick="selectAudioMode('deep')">
@@ -611,7 +617,6 @@
     </div>
   </div>
 
-  <!-- CONTACT / ABOUT -->
   <div class="contact-footer">
     <div class="contact-title">About the Creator</div>
     <div class="contact-card">
@@ -824,7 +829,7 @@
           dots[i].classList.toggle('done', i < currentSession - 1);
         }
         secondsLeft = settings.focus * 60;
-        totalSeconds = secondsLeft;
+        totalSeconds = settings.focus * 60;
         document.getElementById('timerPhase').textContent = 'FOCUS';
         document.getElementById('sessionBadge').textContent = 'SESSION ' + currentSession + ' OF ' + settings.sessions;
       }
@@ -1040,3 +1045,5 @@
     header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   }
 </script>
+</body>
+</html>
